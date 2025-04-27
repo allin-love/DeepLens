@@ -1,4 +1,4 @@
-DEBUG: True
+DEBUG: False
 EXP_NAME: 'End2End lens design for image reconstruction.'
 seed: ~
 

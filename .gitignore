@@ -12,6 +12,6 @@ deeplens/do_code/
 !images/*.png
 debug.py
 *.log
-
-
+datasets
+wandb
 lenses/pancake/
