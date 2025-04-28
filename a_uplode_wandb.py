@@ -4,7 +4,7 @@ from tqdm import tqdm
 
 # 1. 初始化wandb
 wandb.init(
-    project="End2End-5-lines1",  # 你的wandb项目名
+    project="End2End-5-lines_1",  # 你的wandb项目名
     name="upload_all_images",  # 新的一个run名字
     job_type="upload",
 )
