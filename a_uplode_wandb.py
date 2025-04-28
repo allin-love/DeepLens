@@ -4,13 +4,13 @@ from tqdm import tqdm
 
 # 1. 初始化wandb
 wandb.init(
-    project="End2End-5-lines",  # 你的wandb项目名
+    project="End2End-5-lines1",  # 你的wandb项目名
     name="upload_all_images",  # 新的一个run名字
     job_type="upload",
 )
 
 # 2. 设置实验目录
-exp_name = "0427-185039-End2End-5-lines-Q6w4"  # 你的exp_name
+exp_name = "0428-194856-End2End-5-lines-XiJu"  # 你的exp_name
 result_dir = f"./results/{exp_name}"
 
 # 3. 收集所有epoch的layout、render、recover图
