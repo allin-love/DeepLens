@@ -1,15 +1,3 @@
-"""
-Automated lens design from scratch. This code uses RMS spot size for lens design, which is much faster than image-based lens design.
-
-Technical Paper:
-    Xinge Yang, Qiang Fu and Wolfgang Heidrich, "Curriculum learning for ab initio deep learned refractive optics," Nature Communications 2024.
-
-This code and data is released under the Creative Commons Attribution-NonCommercial 4.0 International license (CC BY-NC.) In a nutshell:
-    # The license is only for non-commercial use (commercial licenses can be obtained from authors).
-    # The material is provided as-is, with no warranties whatsoever.
-    # If you publish any code, data, or scientific work based on this, please cite our work.
-"""
-
 import logging
 import os
 import random
@@ -20,7 +8,7 @@ import torch
 import yaml
 from tqdm import tqdm
 from transformers import get_cosine_schedule_with_warmup
-
+import wandb  # 导入wandb
 
 from deeplens.geolens import GeoLens
 from deeplens.geolens_utils import create_lens
@@ -29,6 +17,9 @@ from deeplens.utils import create_video_from_images, set_logger, set_seed
 
 def config():
     """Config file for training."""
+    # Initialize wandb with the experiment name
+    wandb.init(project="auto-lens-design", name="AutoLens-RMS")
+
     # Config file
     with open("configs/2_auto_lens_design.yml") as f:
         args = yaml.load(f, Loader=yaml.FullLoader)
@@ -70,6 +61,17 @@ def config():
 
     return args
 
+def upload_images_to_wandb(result_dir):
+    """上传图像到wandb"""
+    images = []  # List of paths to the images
+    for file in os.listdir(result_dir):
+        if file.endswith(".png") or file.endswith(".jpg"):
+            images.append(os.path.join(result_dir, file))
+
+    # 上传每张图像到wandb
+    for img_path in images:
+        img = wandb.Image(img_path)  # 上传图像
+        wandb.log({"lens_image": img})  # 上传图像到wandb
 
 def curriculum_design(
     self:GeoLens,
@@ -148,6 +150,9 @@ def curriculum_design(
             center_p = -self.psf_center(point=ray.o[:, :, 0, :], method="pinhole")
             center_p = center_p.unsqueeze(-2).repeat(1, 1, spp, 1)
 
+            # 上传图像到wandb
+            upload_images_to_wandb(result_dir)
+
         # =======================================
         # Optimize lens by minimizing rms
         # =======================================
@@ -160,7 +165,7 @@ def curriculum_design(
             ra = ray.ra.clone().detach()  # [h, w, spp]
             xy_norm = (xy - center_p) * ra.unsqueeze(-1)
 
-            # Use only quater of rays
+            # Use only quarter of rays
             xy_norm = xy_norm[num_grid // 2 :, num_grid // 2 :, :, :]
             ra = ra[num_grid // 2 :, num_grid // 2 :, :]  # [h/2, w/2, spp]
 
@@ -199,7 +204,6 @@ def curriculum_design(
         pbar.update(1)
 
     pbar.close()
-
 
 if __name__ == "__main__":
     args = config()
@@ -264,3 +268,6 @@ if __name__ == "__main__":
 
     # =====> 4. Create video
     create_video_from_images(f"{result_dir}", f"{result_dir}/autolens.mp4", fps=10)
+
+    # Finish the wandb run at the end
+    wandb.finish()
